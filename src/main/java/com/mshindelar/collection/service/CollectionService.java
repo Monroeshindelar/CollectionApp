@@ -1,6 +1,7 @@
 package com.mshindelar.collection.service;
 
 import com.mshindelar.collection.YGOPROApi.YGOPROApiClient;
+import com.mshindelar.collection.db.filter.AbstractFilter;
 import com.mshindelar.collection.exception.InvalidCollectionItemException;
 import com.mshindelar.collection.exception.NoSuchAccountException;
 import com.mshindelar.collection.exception.NoSuchCardException;
@@ -12,6 +13,7 @@ import com.mshindelar.collection.model.card.Edition;
 import com.mshindelar.collection.model.card.Print;
 import com.mshindelar.collection.model.collection.*;
 import com.mshindelar.collection.model.collection.request.CollectionOperation;
+import com.mshindelar.collection.db.filter.collection.CollectionCardSpecification;
 import com.mshindelar.collection.repository.CollectionCardRepository;
 import com.mshindelar.collection.repository.CollectionPrintOccurrenceRepository;
 import com.mshindelar.collection.repository.CollectionPrintRepository;
@@ -150,6 +152,13 @@ public class CollectionService {
     }
 
     public Collection saveCollection(Collection collection) { return this.collectionRepository.save(collection); }
+
+    public List<CollectionCard> getCollectionCardsByFilter(AbstractFilter filter) {
+        return collectionCardRepository.findAll(new CollectionCardSpecification(filter));
+    }
+
+    public void getCollectionPrintsByFilter(AbstractFilter filter) {
+    }
 
     private CollectionCard getCollectionCard(Collection collection, Card card) throws NoSuchCollectionException {
         return this.collectionCardRepository.findByCollectionAndCard(collection, card)

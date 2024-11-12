@@ -1,11 +1,14 @@
 package com.mshindelar.collection.controller;
 
+import com.mshindelar.collection.dto.collection.CollectionCardDto;
 import com.mshindelar.collection.dto.collection.CollectionDto;
+import com.mshindelar.collection.exception.InvalidFilterException;
 import com.mshindelar.collection.exception.NoSuchAccountException;
 import com.mshindelar.collection.exception.NoSuchCardException;
 import com.mshindelar.collection.exception.NoSuchCollectionException;
 import com.mshindelar.collection.model.collection.Collection;
 import com.mshindelar.collection.model.collection.CollectionPrintOccurrence;
+import com.mshindelar.collection.model.collection.request.CardFilterChain;
 import com.mshindelar.collection.model.collection.request.CollectionCardRequestItem;
 import com.mshindelar.collection.model.collection.request.CollectionOperation;
 import com.mshindelar.collection.service.AccountService;
@@ -31,7 +34,6 @@ import java.util.UUID;
 @RequestMapping("/collection")
 public class CollectionController {
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectionController.class);
-    private static final String USER_HEADER = "COLLECTION-USER";
     @Autowired
     private CollectionService collectionService;
     @Autowired
@@ -104,6 +106,18 @@ public class CollectionController {
         List<CollectionCardRequestItem> requestItems = CsvUtils.read(CollectionCardRequestItem.class,
                 csv.getInputStream());
         this.removeItemsFromCollection(id, requestItems, ignoreFailure);
+    }
+
+    @GetMapping(value = "/{id}/items/filter")
+    public List<CollectionCardDto> filterCollectionItems(@PathVariable UUID id,
+                                                         @RequestBody CardFilterChain filters) {
+        try {
+            return this.collectionService.getCollectionCardsByFilter(filters.toFilter()).stream()
+                    .map(c -> c.convertToDto(modelMapper))
+                    .toList();
+        } catch (InvalidFilterException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Improperly formatted filter chain", e);
+        }
     }
 
     private List<CollectionPrintOccurrence> getOccurrences(UUID id, List<CollectionCardRequestItem> items,

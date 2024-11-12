@@ -5,10 +5,7 @@ import com.mshindelar.collection.dto.collection.CollectionPrintDto;
 import com.mshindelar.collection.model.DaoConverter;
 import com.mshindelar.collection.model.card.Card;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.modelmapper.ModelMapper;
 
 import java.io.Serializable;
@@ -17,8 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity

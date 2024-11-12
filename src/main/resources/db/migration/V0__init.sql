@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS friend (
     friend2 UUID NOT NULL REFERENCES account(id)
 );
 
+-- TODO:// Link Markers
 CREATE TABLE IF NOT EXISTS card (
     id                       TEXT PRIMARY KEY,
     franchise                TEXT NOT NULL,
@@ -29,7 +30,12 @@ CREATE TABLE IF NOT EXISTS card (
     lvl                      int,
     race                     TEXT,
     archetype                TEXT,
-    attribute                TEXT
+    attribute                TEXT,
+    scale                    int,
+    linkval                  int,
+    tcg_release              DATE,
+    ocg_release              DATE,
+    has_effect               boolean
 );
 
 CREATE TABLE IF NOT EXISTS print (
@@ -59,7 +65,7 @@ CREATE TABLE IF NOT EXISTS collection (
 
 CREATE TABLE IF NOT EXISTS collection_card (
     id              UUID PRIMARY KEY,
-    collection_id   UUID NOT NULL REFERENCES collection (id),
+    collection_id   UUID NOT NULL REFERENCES collection (id) ON DELETE CASCADE,
     card_id         TEXT NOT NULL REFERENCES card (id)
 );
 
@@ -67,7 +73,7 @@ CREATE UNIQUE INDEX collection_card_idx ON collection_card (collection_id, card_
 
 CREATE TABLE IF NOT EXISTS collection_print (
     id                      UUID PRIMARY KEY,
-    collection_card_id      UUID NOT NULL REFERENCES collection_card (id),
+    collection_card_id      UUID NOT NULL REFERENCES collection_card (id) ON DELETE CASCADE,
     print_id                TEXT NOT NULL,
     print_set_rarity_code   TEXT NOT NULL,
     FOREIGN KEY (print_id, print_set_rarity_code) REFERENCES print (id, set_rarity_code)
@@ -82,6 +88,7 @@ CREATE TABLE IF NOT EXISTS collection_print_occurrence (
    quantity             int NOT NULL,
    edition              TEXT NOT NULL,
    grade                int,
+   grade_authority      TEXT,
    PRIMARY KEY (collection_print_id, condition, edition)
 );
 

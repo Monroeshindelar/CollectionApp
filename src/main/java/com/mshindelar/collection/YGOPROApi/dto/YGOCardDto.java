@@ -2,16 +2,12 @@ package com.mshindelar.collection.YGOPROApi.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,8 +27,13 @@ public class YGOCardDto implements Serializable {
     private String race;
     private String archetype;
     private Attribute attribute;
+    private int scale;
+    @JsonProperty("linkval")
+    private int linkValue;
     @JsonProperty("card_sets")
     private List<YGOCardSetDto> cardSets;
     @JsonProperty("card_images")
     private List<CardImageDto> cardImages;
+    @JsonProperty("misc_info")
+    private List<MiscCardInfoDto> miscInfo;
 }

@@ -5,21 +5,17 @@ import com.mshindelar.collection.model.DaoConverter;
 import com.mshindelar.collection.model.card.Condition;
 import com.mshindelar.collection.model.card.Edition;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.modelmapper.ModelMapper;
 
 import java.io.Serializable;
 import java.util.Objects;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-//@Table(name = "collection_print_occurrence")
+@Table(name = "collection_print_occurrence")
 @IdClass(CollectionPrintOccurrence.CollectionPrintOccurrenceId.class)
 public class CollectionPrintOccurrence implements Serializable, DaoConverter<CollectionPrintOccurrenceDto> {
     @Id

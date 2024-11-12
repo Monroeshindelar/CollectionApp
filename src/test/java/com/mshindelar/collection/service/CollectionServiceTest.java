@@ -1,20 +1,30 @@
 package com.mshindelar.collection.service;
 
+import com.mshindelar.collection.db.filter.AndFilter;
+import com.mshindelar.collection.db.filter.FilterOperator;
+import com.mshindelar.collection.db.filter.OrFilter;
+import com.mshindelar.collection.db.filter.SimpleFilter;
+import com.mshindelar.collection.db.filter.card.CardFilter;
 import com.mshindelar.collection.exception.InvalidCollectionItemException;
 import com.mshindelar.collection.exception.NoSuchCardException;
 import com.mshindelar.collection.exception.NoSuchCollectionException;
-import com.mshindelar.collection.model.card.*;
-import com.mshindelar.collection.model.collection.*;
+import com.mshindelar.collection.model.card.CardFranchise;
+import com.mshindelar.collection.model.card.Condition;
+import com.mshindelar.collection.model.card.Edition;
+import com.mshindelar.collection.model.card.Print;
+import com.mshindelar.collection.model.card.ygo.YGOCard;
+import com.mshindelar.collection.model.collection.Collection;
+import com.mshindelar.collection.model.collection.CollectionCard;
+import com.mshindelar.collection.model.collection.CollectionPrintOccurrence;
+import com.mshindelar.collection.model.collection.CollectionSettings;
 import com.mshindelar.collection.model.collection.request.CollectionOperation;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
 class CollectionServiceTest extends BaseServiceTest {
-
 
     @Test
     public void testCreateNewCollection() throws Exception {
@@ -209,6 +219,86 @@ class CollectionServiceTest extends BaseServiceTest {
                 () -> this.collectionService.modifyCollectionItem(testCollection.getId(), megalo.getId(),
                         megalo.getSetRarityCode(), Condition.GRADE, Edition.FIRST, -1, 3,
                         CollectionOperation.ADD));
+    }
+
+    @Test
+    public void testGetCollectionCardsFilter() throws Exception {
+        Print megalo = cardService.getPrint("ABYR-EN020", "(ScR)");
+        Print leed = cardService.getPrint("CBLZ-EN034", "(ScR)");
+        Print pike = cardService.getPrint("AP05-EN007", "(SR)");
+        Print sphere = cardService.getPrint("ABYR-EN072", "(UtR)");
+        Print linde = cardService.getPrint("ABYR-EN014", "(UR)");
+        Print gunde = cardService.getPrint("AP03-EN005", "(SR)");
+        Print mizuchi = cardService.getPrint("LTGY-EN064", "(C)");
+        Print gaios = cardService.getPrint("ABYR-EN046", "(UtR)");
+
+        this.collectionService.modifyCollectionItem(testCollection.getId(), megalo.getId(), megalo.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), leed.getId(), leed.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), pike.getId(), pike.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), sphere.getId(), sphere.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), linde.getId(), linde.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), gunde.getId(), gunde.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), mizuchi.getId(), mizuchi.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+        this.collectionService.modifyCollectionItem(testCollection.getId(), gaios.getId(), gaios.getSetRarityCode(),
+                Condition.NEAR_MINT, Edition.FIRST, 0, 3, CollectionOperation.ADD);
+
+
+        SimpleFilter levelFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.LEVEL,
+                FilterOperator.EQUAL_TO, 7));
+        List<CollectionCard> cards = collectionService.getCollectionCardsByFilter(levelFilter);
+        Assertions.assertNotNull(cards);
+        Assertions.assertEquals(3, cards.size());
+        cards.forEach(c -> Assertions.assertEquals(7, ((YGOCard) Hibernate.unproxy(c.getCard())).getLevel()));
+
+        SimpleFilter trapFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.TYPE, FilterOperator.EQUAL_TO, "Trap Card"));
+        SimpleFilter spellFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.TYPE, FilterOperator.EQUAL_TO, "Spell Card"));
+        OrFilter spellTrapFilter = new OrFilter(List.of(trapFilter, spellFilter));
+
+        List<CollectionCard> spellsAndTraps = collectionService.getCollectionCardsByFilter(spellTrapFilter);
+        Assertions.assertNotNull(spellsAndTraps);
+        Assertions.assertEquals(2, spellsAndTraps.size());
+        spellsAndTraps.forEach(c -> {
+                YGOCard ygoCard = (YGOCard) Hibernate.unproxy(c.getCard());
+                Assertions.assertTrue( ygoCard.getType().equals("Spell Card") ||
+                        ygoCard.getType().equals("Trap Card"));
+        });
+
+        levelFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.LT, 7));
+        SimpleFilter raceFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.RACE,
+                FilterOperator.EQUAL_TO, "Fish"));
+        AndFilter andFilter = new AndFilter(List.of(levelFilter, raceFilter));
+        cards = collectionService.getCollectionCardsByFilter(andFilter);
+        cards.forEach(c -> {
+            YGOCard ygoCard = (YGOCard) Hibernate.unproxy(c.getCard());
+            Assertions.assertTrue(ygoCard.getLevel() < 7);
+            Assertions.assertEquals("Fish", ygoCard.getRace());
+        });
+
+        SimpleFilter notEffectMonsterFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.TYPE,
+                FilterOperator.NOT_EQUAL, "Effect Monster"));
+        levelFilter = new SimpleFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.EQUAL_TO, 7));
+        AndFilter and1 = new AndFilter(List.of(notEffectMonsterFilter, levelFilter));
+        OrFilter or1 = new OrFilter(List.of(andFilter, and1));
+
+        cards = collectionService.getCollectionCardsByFilter(or1);
+
+        SimpleFilter btwnLevels = new SimpleFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.BETWEEN,
+                1));
+        btwnLevels.getFilter().setSecondaryValue(5);
+
+        cards = collectionService.getCollectionCardsByFilter(btwnLevels);
+
+        SimpleFilter tuner = new SimpleFilter(new CardFilter(CardFilter.CardField.TYPE, FilterOperator.LIKE, "Tuner"));
+        cards = collectionService.getCollectionCardsByFilter(tuner);
+
+        int bp = 1;
     }
 
     private List<CollectionPrintOccurrence> getCollectionPrintOccurrenceForPrints(List<Print> prints) {

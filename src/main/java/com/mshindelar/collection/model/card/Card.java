@@ -1,20 +1,17 @@
 package com.mshindelar.collection.model.card;
 
 import com.mshindelar.collection.dto.card.CardDto;
-import com.mshindelar.collection.dto.card.YGOCardDto;
 import com.mshindelar.collection.model.DaoConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.modelmapper.ModelMapper;
 
 import java.io.Serializable;
 
 @Entity
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "card")

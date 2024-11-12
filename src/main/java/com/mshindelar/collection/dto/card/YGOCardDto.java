@@ -22,6 +22,10 @@ public class YGOCardDto extends CardDto {
     private int attack;
     private int defense;
 
+    private int scale;
+
+    private int linkValue;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

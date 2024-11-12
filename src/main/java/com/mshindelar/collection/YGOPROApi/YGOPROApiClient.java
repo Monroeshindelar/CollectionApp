@@ -16,7 +16,7 @@ import java.util.List;
 
 @Component
 public class YGOPROApiClient {
-    private static final String BASE_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php";
+    private static final String BASE_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes";
 
     @Autowired
     private HttpClient client;

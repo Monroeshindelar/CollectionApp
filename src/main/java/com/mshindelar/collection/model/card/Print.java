@@ -4,10 +4,7 @@ import com.mshindelar.collection.dto.card.PrintDto;
 import com.mshindelar.collection.model.DaoConverter;
 import com.mshindelar.collection.model.collection.CollectionPrint;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.modelmapper.ModelMapper;
 
 import java.io.Serializable;
@@ -15,8 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "print")
@@ -28,7 +24,7 @@ public class Print implements Serializable, DaoConverter<PrintDto> {
     @Column(name = "set_rarity_code")
     private String setRarityCode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     private Card card;
 
     @OneToMany(mappedBy = "print", cascade = CascadeType.ALL, orphanRemoval = true)

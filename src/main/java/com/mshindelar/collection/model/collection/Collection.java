@@ -5,10 +5,7 @@ import com.mshindelar.collection.dto.collection.CollectionDto;
 import com.mshindelar.collection.model.Account;
 import com.mshindelar.collection.model.DaoConverter;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.modelmapper.ModelMapper;
 
 import java.io.Serializable;
@@ -17,8 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Collection implements Serializable, DaoConverter<CollectionDto> {

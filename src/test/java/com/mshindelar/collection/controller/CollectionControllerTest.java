@@ -1,13 +1,18 @@
 package com.mshindelar.collection.controller;
 
+import com.mshindelar.collection.dto.collection.CollectionCardDto;
 import com.mshindelar.collection.dto.collection.CollectionDto;
 import com.mshindelar.collection.model.card.Condition;
 import com.mshindelar.collection.model.card.Edition;
 import com.mshindelar.collection.model.card.Print;
 import com.mshindelar.collection.model.collection.Collection;
 import com.mshindelar.collection.model.collection.CollectionCard;
+import com.mshindelar.collection.model.collection.request.CardFilterChain;
 import com.mshindelar.collection.model.collection.request.CollectionCardRequestItem;
 import com.mshindelar.collection.model.collection.request.CollectionOperation;
+import com.mshindelar.collection.model.collection.request.FilterType;
+import com.mshindelar.collection.db.filter.FilterOperator;
+import com.mshindelar.collection.db.filter.card.CardFilter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +34,7 @@ public class CollectionControllerTest extends BaseContollerTest {
                     Mermail Abyssleed,CBLZ-EN034,(ScR),NEAR_MINT,UNLIMITED,1,
                     Mermail Abyssteus,BLLR-EN051,(ScR),NEAR_MINT,FIRST,3,
                     Mermail Abysspike,AP05-EN007,(SR),NEAR_MINT,UNLIMITED,2,
+                    Mermail Abyssgaios,ABYR-EN046,(UtR),NEAR_MINT,FIRST,1,
                     INVALID CARD,IVLD-EN000,(Scr),NEAR_MINT,LIMITED,1""";
 
     @Autowired
@@ -49,11 +55,8 @@ public class CollectionControllerTest extends BaseContollerTest {
     public void testGetCollection_DoesNotExist() throws Exception {
         Throwable t = null;
 
-        try {
-            collectionController.getCollection(UUID.randomUUID());
-        } catch (Exception e) {
-            t = e;
-        }
+        try { collectionController.getCollection(UUID.randomUUID()); }
+        catch (Exception e) { t = e; }
 
         Assertions.assertNotNull(t);
         Assertions.assertTrue(t instanceof ResponseStatusException);
@@ -146,7 +149,7 @@ public class CollectionControllerTest extends BaseContollerTest {
 
         Collection c = collectionService.getCollection(testCollection.getId());
         Assertions.assertNotNull(c);
-        Assertions.assertEquals(4, c.getItems().size());
+        Assertions.assertEquals(5, c.getItems().size());
     }
 
     @Test
@@ -160,5 +163,92 @@ public class CollectionControllerTest extends BaseContollerTest {
         Assertions.assertNotNull(t);
         Assertions.assertTrue(t instanceof ResponseStatusException);
         Assertions.assertEquals(HttpStatus.BAD_REQUEST, ((ResponseStatusException) t).getStatusCode());
+    }
+
+    @Test
+    public void testFilterItems() throws Exception {
+        testAddItemsToCollection_CSV_IgnoreFailure();
+
+        CardFilterChain outerChain = new CardFilterChain();
+        outerChain.setFilterType(FilterType.OR);
+
+        CardFilterChain innerChain1 = new CardFilterChain();
+        innerChain1.setFilterType(FilterType.AND);
+        CardFilterChain innerInnerChain1 = new CardFilterChain();
+        innerInnerChain1.setFilterType(FilterType.SIMPLE);
+        innerInnerChain1.setFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.EQUAL_TO, 7));
+        CardFilterChain innerInnerChain2 = new CardFilterChain();
+        innerInnerChain2.setFilterType(FilterType.SIMPLE);
+        innerInnerChain2.setFilter(new CardFilter(CardFilter.CardField.TYPE, FilterOperator.NOT_EQUAL, "XYZ Monster"));
+        innerChain1.setChain(List.of(innerInnerChain1, innerInnerChain2));
+
+        CardFilterChain innerChain2 = new CardFilterChain();
+        innerChain2.setFilterType(FilterType.AND);
+
+        CardFilterChain inner1InnerChain1 = new CardFilterChain();
+        inner1InnerChain1.setFilterType(FilterType.SIMPLE);
+        inner1InnerChain1.setFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.LT, 7));
+
+        CardFilterChain inner1InnerChain2 = new CardFilterChain();
+        inner1InnerChain2.setFilterType(FilterType.SIMPLE);
+        inner1InnerChain2.setFilter(new CardFilter(CardFilter.CardField.RACE, FilterOperator.EQUAL_TO, "Fish"));
+
+        innerChain2.setChain(List.of(inner1InnerChain1, inner1InnerChain2));
+
+        outerChain.setChain(List.of(innerChain1, innerChain2));
+
+        List<CollectionCardDto> cards = this.collectionController.filterCollectionItems(testCollection.getId(), outerChain);
+
+        Assertions.assertNotNull(cards);
+        Assertions.assertEquals(4, cards.size());
+
+    }
+
+    @Test
+    public void testFilterItems_ImproperlyFormattedFilter() {
+        CardFilterChain outerChain = new CardFilterChain();
+        outerChain.setFilterType(FilterType.OR);
+
+        CardFilterChain innerChain1 = new CardFilterChain();
+        innerChain1.setFilterType(FilterType.AND);
+        CardFilterChain innerInnerChain1 = new CardFilterChain();
+        innerInnerChain1.setFilterType(FilterType.SIMPLE);
+        innerInnerChain1.setFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.EQUAL_TO, 7));
+        CardFilterChain innerInnerChain2 = new CardFilterChain();
+        innerInnerChain2.setFilterType(FilterType.SIMPLE);
+        innerInnerChain2.setFilter(new CardFilter(CardFilter.CardField.TYPE, FilterOperator.NOT_EQUAL, "XYZ Monster"));
+        innerChain1.setChain(List.of(innerInnerChain1, innerInnerChain2));
+
+        CardFilterChain innerChain2 = new CardFilterChain();
+        innerChain2.setFilterType(FilterType.AND);
+
+        CardFilterChain inner1InnerChain1 = new CardFilterChain();
+        inner1InnerChain1.setFilterType(FilterType.SIMPLE);
+        inner1InnerChain1.setFilter(new CardFilter(CardFilter.CardField.LEVEL, FilterOperator.LT, 7));
+
+        innerChain2.setChain(List.of(inner1InnerChain1));
+
+        outerChain.setChain(List.of(innerChain1, innerChain2));
+
+        Throwable t = null;
+
+        try { this.collectionController.filterCollectionItems(testCollection.getId(), outerChain); }
+        catch (Exception e) { t = e; }
+
+        Assertions.assertNotNull(t);
+        Assertions.assertTrue(t instanceof ResponseStatusException);
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, ((ResponseStatusException) t).getStatusCode());
+
+        CardFilterChain chain2 = new CardFilterChain();
+        chain2.setFilterType(FilterType.SIMPLE);
+
+        try { this.collectionController.filterCollectionItems(testCollection.getId(), chain2); }
+        catch (Exception e) { t = e; }
+
+        Assertions.assertNotNull(t);
+        Assertions.assertTrue(t instanceof ResponseStatusException);
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, ((ResponseStatusException) t).getStatusCode());
+
+
     }
 }
